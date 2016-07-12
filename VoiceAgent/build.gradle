@@ -18,8 +18,12 @@ allprojects {
         maven {
             url 'https://raw.githubusercontent.com/rosjava/rosjava_mvn_repo/master/'
         }
+        maven {
+            url 'https://raw.githubusercontent.com/bme-mit-r5cop/wp24-common/master/'
+        }
         jcenter()
         mavenLocal()
+
 
     }
 }
