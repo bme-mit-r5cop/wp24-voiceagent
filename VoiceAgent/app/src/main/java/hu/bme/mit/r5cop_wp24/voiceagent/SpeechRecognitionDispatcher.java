@@ -1,5 +1,7 @@
 package hu.bme.mit.r5cop_wp24.voiceagent;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.ros.node.ConnectedNode;
@@ -21,6 +23,7 @@ import acl.Text2SpeechMessage;
  */
 public class SpeechRecognitionDispatcher {
 
+    private String LOG_TAG = "SpeechRecognitionDispatcher";
     static class RegExpWithPriority implements Comparable<RegExpWithPriority> {
         String regexp;
         int priority;
@@ -75,6 +78,7 @@ public class SpeechRecognitionDispatcher {
 
             String msg = srm.toJson(); //serialize message to string
             str.setData(msg);
+            Log.d(LOG_TAG, "Recognition sent: " + str.getData());
             pub.publish(str);
         }
     }

@@ -23,6 +23,10 @@ public class SpeechRecognitionNode implements RecognitionListener {
     public interface SpeechRecognitionNodeListener {
         void onResults(Bundle results);
         void onPartialResults(Bundle results);
+        void onReadyForSpeech(Bundle params);
+        void onBeginningOfSpeech();
+        void onEndOfSpeech();
+        void onRmsChanged(float rmsdB);
     }
 
     private String LOG_TAG = "SpeechRecognitionNode";
@@ -32,8 +36,9 @@ public class SpeechRecognitionNode implements RecognitionListener {
     SpeechRecognitionNodeListener srl;
 
     SpeechRecognitionDispatcher srd;
-
+    Context context;
     public SpeechRecognitionNode(Context context, ConnectedNode node) {
+        this.context = context;
         sr = SpeechRecognizer.createSpeechRecognizer(context);
         sr.setRecognitionListener(this);
 
@@ -42,6 +47,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
+                Log.d(LOG_TAG, "Registration received: " + message.getData());
                 srd.updateRegistrations(message.getData());
             }
         });
@@ -54,16 +60,22 @@ public class SpeechRecognitionNode implements RecognitionListener {
     @Override
     public void onReadyForSpeech(Bundle params) {
         Log.i(LOG_TAG, "onReadyForSpeech");
+        if (srl != null)
+            srl.onReadyForSpeech(params);
     }
 
     @Override
     public void onBeginningOfSpeech() {
         Log.i(LOG_TAG, "onBeginningOfSpeech");
+        if (srl != null)
+            srl.onBeginningOfSpeech();
     }
 
     @Override
     public void onRmsChanged(float rmsdB) {
         Log.i(LOG_TAG, "onRmsChanged");
+        if (srl != null)
+            srl.onRmsChanged(rmsdB);
     }
 
     @Override
@@ -74,6 +86,8 @@ public class SpeechRecognitionNode implements RecognitionListener {
     @Override
     public void onEndOfSpeech() {
         Log.i(LOG_TAG, "onEndOfSpeech");
+        if (srl != null)
+            srl.onEndOfSpeech();
     }
 
     @Override
@@ -112,6 +126,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
     public void startListening() {
         Intent recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+        Log.d(LOG_TAG, this.getClass().getPackage().getName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getClass().getPackage().getName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
@@ -119,10 +134,13 @@ public class SpeechRecognitionNode implements RecognitionListener {
     }
 
     public void stopListening() {
+        sr.stopListening();
     }
 
     public void shutdown() {
-        sr.destroy();
-        sr = null;
+        if (sr != null) {
+            sr.destroy();
+            sr = null;
+        }
     }
 }

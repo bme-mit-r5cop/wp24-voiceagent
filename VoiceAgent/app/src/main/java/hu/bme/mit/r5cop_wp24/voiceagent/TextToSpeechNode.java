@@ -30,6 +30,7 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
+                Log.d(LOG_TAG, "TTS received: " + message.getData());
                 try {
                     Text2SpeechMessage ttsmsg = new Text2SpeechMessage(message.getData());
                     String speakString = ttsmsg.getText();

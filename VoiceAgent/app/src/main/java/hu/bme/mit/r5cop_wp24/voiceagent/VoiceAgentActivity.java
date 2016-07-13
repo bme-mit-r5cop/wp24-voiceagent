@@ -66,13 +66,16 @@ public class VoiceAgentActivity extends RosActivity  {
             public void onClick(View v) {
                 if (sr != null) {
                     if (!isRecording) {
+                        isRecording = true;
+                        Log.d(LOG_TAG,VoiceAgentActivity.this.getPackageName());
                         sr.startListening();
                         recButton.setText("STOP");
-                        isRecording = true;
+                        Log.d(LOG_TAG, "rec start");
                     } else {
+                        isRecording = false;
                         sr.stopListening();
                         recButton.setText("REC");
-                        isRecording = false;
+                        Log.d(LOG_TAG, "rec stop");
                     }
                 }
             }
@@ -136,6 +139,22 @@ public class VoiceAgentActivity extends RosActivity  {
                                     text += result + "\n";
 
                                 recResult.setText(text);
+                            }
+
+                            @Override
+                            public void onReadyForSpeech(Bundle params) {
+                            }
+
+                            @Override
+                            public void onBeginningOfSpeech() {
+                            }
+
+                            @Override
+                            public void onEndOfSpeech() {
+                            }
+
+                            @Override
+                            public void onRmsChanged(float rmsdB) {
                             }
                         });
                     }
