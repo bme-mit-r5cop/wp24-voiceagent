@@ -35,6 +35,7 @@ public class SubscribeMessage extends ACLMessage {
 		super(jsonString);
 		
 		// Load all accepted patterns
+		recognitionTopic = json.getString("recognition_topic");
 		JSONArray patternArray = json.getJSONArray("accepted_patterns");
         JSONObject patternObject = null;
         for (int i = 0; i < patternArray.length(); i++) {
@@ -61,8 +62,8 @@ public class SubscribeMessage extends ACLMessage {
 	 * Convert into JSON string representation
 	 */
 	public String toJson() {
-		String content = "  accepted_patterns : [\n";
-		
+		String content = "  recognition_topic : \""+recognitionTopic+"\",\n"
+					   + "  accepted_patterns : [\n";
 		for (int i=0; i<acceptedPatterns.size(); i++) {
 			content = content 
 					+ "    {\n"
