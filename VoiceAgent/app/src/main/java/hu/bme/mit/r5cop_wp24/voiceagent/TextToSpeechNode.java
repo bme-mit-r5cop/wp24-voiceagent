@@ -4,11 +4,14 @@ import android.content.Context;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
+import org.json.JSONException;
 import org.ros.message.MessageListener;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
 
 import java.util.Locale;
+
+import acl.Text2SpeechMessage;
 
 
 /**
@@ -27,8 +30,13 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
-                Log.d(LOG_TAG, "I heard: \"" + message.getData() + "\"");
-                tts.speak(message.getData(), TextToSpeech.QUEUE_ADD, null, message.getData());
+                try {
+                    Text2SpeechMessage ttsmsg = new Text2SpeechMessage(message.getData());
+                    String speakString = ttsmsg.getText();
+                    tts.speak(speakString, TextToSpeech.QUEUE_ADD, null, speakString);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }

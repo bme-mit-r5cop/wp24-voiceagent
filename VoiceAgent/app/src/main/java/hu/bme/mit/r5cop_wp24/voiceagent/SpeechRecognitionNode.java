@@ -46,6 +46,8 @@ public class SpeechRecognitionNode implements RecognitionListener {
             }
         });
 
+
+
         srd = new SpeechRecognitionDispatcher(node);
     }
 
