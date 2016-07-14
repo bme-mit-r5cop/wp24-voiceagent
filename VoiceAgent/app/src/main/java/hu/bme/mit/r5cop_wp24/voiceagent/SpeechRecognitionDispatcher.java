@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import acl.AcceptedPattern;
 import acl.SpeechRecognitionMessage;
@@ -24,7 +25,7 @@ import acl.Text2SpeechMessage;
 public class SpeechRecognitionDispatcher {
 
     private String LOG_TAG = "SpeechRecognitionDispatcher";
-    static class RegExpWithPriority implements Comparable<RegExpWithPriority> {
+    public static class RegExpWithPriority implements Comparable<RegExpWithPriority> {
         String regexp;
         int priority;
 
@@ -108,5 +109,9 @@ public class SpeechRecognitionDispatcher {
             Publisher<std_msgs.String> pub = node.newPublisher(topic, std_msgs.String._TYPE);
             publishers.put(topic, pub);
         }
+    }
+
+    public Map<String, List<RegExpWithPriority>> getRegisteredRegexps() {
+        return registeredRegExps;
     }
 }

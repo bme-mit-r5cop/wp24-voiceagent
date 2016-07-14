@@ -14,6 +14,8 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by steve on 7/12/16.
@@ -27,6 +29,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         void onBeginningOfSpeech();
         void onEndOfSpeech();
         void onRmsChanged(float rmsdB);
+        void onRegexpsChanged(Map<String, List<SpeechRecognitionDispatcher.RegExpWithPriority>> registeredRegexps);
     }
 
     private String LOG_TAG = "SpeechRecognitionNode";
@@ -49,6 +52,8 @@ public class SpeechRecognitionNode implements RecognitionListener {
             public void onNewMessage(std_msgs.String message) {
                 Log.d(LOG_TAG, "Registration received: " + message.getData());
                 srd.updateRegistrations(message.getData());
+
+                srl.onRegexpsChanged(srd.getRegisteredRegexps());
             }
         });
 
@@ -134,6 +139,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getClass().getPackage().getName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
         sr.startListening(recognizerIntent);
     }

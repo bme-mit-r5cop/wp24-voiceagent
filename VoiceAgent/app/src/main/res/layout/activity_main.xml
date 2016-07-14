@@ -9,19 +9,26 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="hu.bme.mit.r5cop_wp24.MainActivity">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="REC"
-        android:id="@+id/buttonRec"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/recResult"
-        android:layout_below="@+id/buttonRec"
         android:layout_alignParentStart="true" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonRec"
+        android:background="@drawable/ic_mic_black_48dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/regexpText"
+        android:layout_below="@+id/recResult"
+        android:layout_alignParentStart="true" />
+
 </RelativeLayout>

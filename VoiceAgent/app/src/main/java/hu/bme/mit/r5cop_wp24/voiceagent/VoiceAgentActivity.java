@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import org.ros.android.RosActivity;
@@ -20,16 +21,18 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-
+import java.util.List;
+import java.util.Map;
 
 
 public class VoiceAgentActivity extends RosActivity  {
 
     private String LOG_TAG = "VoiceAgent";
 
-    Button recButton;
+    ImageButton recButton;
     boolean isRecording = false;
     TextView recResult;
+    TextView regexpText;
 
 
     TextToSpeechNode tts;
@@ -59,7 +62,8 @@ public class VoiceAgentActivity extends RosActivity  {
         */
 
         recResult = (TextView)findViewById(R.id.recResult);
-        recButton = (Button)findViewById(R.id.buttonRec);
+        recButton = (ImageButton)findViewById(R.id.buttonRec);
+        regexpText = (TextView)findViewById(R.id.regexpText);
         recButton.setEnabled(false);
         recButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,12 +72,13 @@ public class VoiceAgentActivity extends RosActivity  {
                     if (!isRecording) {
                         isRecording = true;
                         sr.startListening();
-                        recButton.setText("STOP");
+                        recButton.setImageResource(R.drawable.ic_mic_off_black_48dp);
+
                         Log.d(LOG_TAG, "rec start");
                     } else {
                         isRecording = false;
                         sr.stopListening();
-                        recButton.setText("REC");
+                        recButton.setImageResource(R.drawable.ic_mic_black_48dp);
                         Log.d(LOG_TAG, "rec stop");
                     }
                 }
@@ -154,6 +159,30 @@ public class VoiceAgentActivity extends RosActivity  {
 
                             @Override
                             public void onRmsChanged(float rmsdB) {
+                            }
+
+                            @Override
+                            public void onRegexpsChanged(final Map<String, List<SpeechRecognitionDispatcher.RegExpWithPriority>> registeredRegexps) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        StringBuilder sb = new StringBuilder();
+                                        sb.append("Available commands:\n");
+                                        for(String topic : registeredRegexps.keySet()) {
+                                            for (SpeechRecognitionDispatcher.RegExpWithPriority rwp : registeredRegexps.get(topic)) {
+                                                //sb.append(topic);
+                                                //sb.append(": ");
+                                                sb.append(rwp.regexp);
+                                                //sb.append(" (");
+                                                //sb.append(rwp.priority);
+                                                //sb.append(")");
+                                                sb.append("\n");
+                                            }
+                                        }
+                                        regexpText.setText(sb.toString());
+                                    }
+                                });
+
                             }
                         });
                     }
