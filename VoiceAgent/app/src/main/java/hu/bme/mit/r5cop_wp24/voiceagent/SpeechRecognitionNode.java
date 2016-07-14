@@ -92,7 +92,13 @@ public class SpeechRecognitionNode implements RecognitionListener {
 
     @Override
     public void onError(int error) {
+
         Log.i(LOG_TAG, "onError: " + error);
+        if (error == SpeechRecognizer.ERROR_NO_MATCH) {
+            sr.cancel();
+            startListening();
+            Log.i(LOG_TAG, "SpeechRecognition restarted listening to workaround a known bug.");
+        }
     }
 
     @Override
@@ -126,7 +132,6 @@ public class SpeechRecognitionNode implements RecognitionListener {
     public void startListening() {
         Intent recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
-        Log.d(LOG_TAG, this.getClass().getPackage().getName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getClass().getPackage().getName());
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);

@@ -67,7 +67,6 @@ public class VoiceAgentActivity extends RosActivity  {
                 if (sr != null) {
                     if (!isRecording) {
                         isRecording = true;
-                        Log.d(LOG_TAG,VoiceAgentActivity.this.getPackageName());
                         sr.startListening();
                         recButton.setText("STOP");
                         Log.d(LOG_TAG, "rec start");
