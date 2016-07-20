@@ -37,7 +37,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
 
     SpeechRecognizer sr;
     SpeechRecognitionNodeListener srl;
-
+    long recStartTime;
     SpeechRecognitionDispatcher srd;
     Context context;
     public SpeechRecognitionNode(Context context, ConnectedNode node) {
@@ -56,7 +56,6 @@ public class SpeechRecognitionNode implements RecognitionListener {
                 srl.onRegexpsChanged(srd.getRegisteredRegexps());
             }
         });
-
 
 
         srd = new SpeechRecognitionDispatcher(node);
@@ -99,7 +98,8 @@ public class SpeechRecognitionNode implements RecognitionListener {
     public void onError(int error) {
 
         Log.i(LOG_TAG, "onError: " + error);
-        if (error == SpeechRecognizer.ERROR_NO_MATCH) {
+        long now = System.currentTimeMillis();
+        if (error == SpeechRecognizer.ERROR_NO_MATCH && (now - recStartTime < 300)) {
             sr.cancel();
             startListening();
             Log.i(LOG_TAG, "SpeechRecognition restarted listening to workaround a known bug.");
@@ -142,6 +142,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
         sr.startListening(recognizerIntent);
+        recStartTime = System.currentTimeMillis();
     }
 
     public void stopListening() {

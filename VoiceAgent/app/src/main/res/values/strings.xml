@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">VoiceAgent</string>
+    <string name="title_activity_shopping_list">ShoppingList</string>
 </resources>
