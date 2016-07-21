@@ -51,7 +51,7 @@ public class ShoppingList {
         listView.setAdapter(new ShoppingListAdapter(activity, R.layout.shopping_list_row, list));
 
 
-        Button newButton = (Button) dialog.findViewById(R.id.buttonNewItem);
+        ImageButton newButton = (ImageButton) dialog.findViewById(R.id.addNewItem);
         newButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -137,10 +137,10 @@ public class ShoppingList {
                 if (tt2 != null) {
                     switch (item.status) {
                         case ADDED:
-                            tt2.setImageResource(R.drawable.ic_mic_off_black_48dp);
+                            tt2.setImageDrawable(null);
                             break;
                         case AT_PRODUCT:
-                            tt2.setImageResource(R.drawable.ic_mic_black_48dp);
+                            tt2.setImageResource(R.drawable.ic_photo_camera_black_48dp);
                             tt2.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -150,7 +150,7 @@ public class ShoppingList {
                             });
                             break;
                         case COLLECTED:
-                            tt2.setImageResource(R.drawable.ic_assignment_black_48dp);
+                            tt2.setImageResource(R.drawable.ic_done_black_48dp);
                             break;
                     }
                 }
