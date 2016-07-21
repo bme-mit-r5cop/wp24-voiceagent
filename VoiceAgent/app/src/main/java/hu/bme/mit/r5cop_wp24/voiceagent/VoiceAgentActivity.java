@@ -103,7 +103,7 @@ public class VoiceAgentActivity extends RosActivity  {
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
         Log.d(LOG_TAG, "Master IP: " + getMasterUri().getHost().toString() + " port: " + getMasterUri().getPort());
-        String ownAddr = findOwnAddress();//"152.66.252.92"
+        String ownAddr = findOwnAddress();
         Log.d(LOG_TAG, "Own IP: " + ownAddr);
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(ownAddr, getMasterUri());
 

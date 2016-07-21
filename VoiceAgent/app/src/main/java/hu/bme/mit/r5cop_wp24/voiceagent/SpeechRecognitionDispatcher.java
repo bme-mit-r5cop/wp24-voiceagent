@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import acl.AcceptedPattern;
-import acl.SpeechRecognitionMessage;
+import acl.GeneralMessage;
 import acl.SubscribeMessage;
 import acl.Text2SpeechMessage;
 
@@ -75,7 +75,7 @@ public class SpeechRecognitionDispatcher {
             Publisher<std_msgs.String> pub = publishers.get(topic);
             std_msgs.String str = pub.newMessage();
 
-            SpeechRecognitionMessage srm = new SpeechRecognitionMessage("SpeechRecognitionNode", topic, recognizedString);
+            GeneralMessage srm = new GeneralMessage("SpeechRecognitionNode", topic, recognizedString);
 
             String msg = srm.toJson(); //serialize message to string
             str.setData(msg);

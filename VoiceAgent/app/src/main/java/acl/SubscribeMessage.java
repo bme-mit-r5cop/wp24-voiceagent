@@ -69,7 +69,9 @@ public class SubscribeMessage extends ACLMessage {
 					+ "    {\n"
 					+ "      regexp : \""+acceptedPatterns.get(i).getMask()+"\",\n"
 					+ "      priority : \""+acceptedPatterns.get(i).getPriorty()+"\"\n"
-					+ "    },\n";
+					+ "    }";
+			if (i<acceptedPatterns.size()-1) content = content + ",";
+			content = content + "\n";
 					
 		}
 		
