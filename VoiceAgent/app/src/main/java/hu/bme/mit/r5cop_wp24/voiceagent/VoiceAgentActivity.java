@@ -1,6 +1,8 @@
 package hu.bme.mit.r5cop_wp24.voiceagent;
 
 
+import android.app.Dialog;
+import android.content.Intent;
 import android.speech.SpeechRecognizer;
 import android.os.Bundle;
 import android.util.Log;
@@ -8,6 +10,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import com.google.common.base.Preconditions;
 
 import org.ros.android.RosActivity;
 import org.ros.namespace.GraphName;
@@ -31,13 +35,14 @@ public class VoiceAgentActivity extends RosActivity  {
 
     ImageButton recButton;
     boolean isRecording = false;
+    long recStartTime;
     TextView recResult;
     TextView regexpText;
 
 
     TextToSpeechNode tts;
     SpeechRecognitionNode sr;
-
+    ShoppingListNode sln;
 
     public VoiceAgentActivity() {
         super("VoiceAgent", "VoiceAgent");
@@ -54,6 +59,8 @@ public class VoiceAgentActivity extends RosActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
 
 
 
@@ -84,6 +91,38 @@ public class VoiceAgentActivity extends RosActivity  {
                 }
             }
         });
+
+
+        ImageButton slButton = (ImageButton) findViewById(R.id.butonShoppingList);
+        slButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Intent intent = new Intent(VoiceAgentActivity.this, ShoppingList.class);
+               // startActivity(intent);
+
+                sln.showDialog(VoiceAgentActivity.this);
+            }
+        });
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        // If the Barcode Scanner returned a string then display that string.
+        if (requestCode == ShoppingList.SHOPPING_LIST_QR_SCAN_NEW_ID) {
+            if (resultCode == RESULT_OK) {
+                String scanResultFormat = intent.getStringExtra("SCAN_RESULT_FORMAT");
+                Preconditions.checkState(scanResultFormat.equals("TEXT_TYPE")
+                        || scanResultFormat.equals("QR_CODE"));
+                String contents = intent.getStringExtra("SCAN_RESULT");
+
+                sln.addNewItem(new ShoppingList.ShoppingListItem(contents));
+                sln.showDialog(VoiceAgentActivity.this);
+            }
+        }
+        else {
+            super.onActivityResult(requestCode,resultCode, intent);
+        }
     }
 
     @Override
@@ -122,6 +161,7 @@ public class VoiceAgentActivity extends RosActivity  {
                         tts = new TextToSpeechNode(VoiceAgentActivity.this, connectedNode);
                         sr = new SpeechRecognitionNode(VoiceAgentActivity.this, connectedNode);
                         recButton.setEnabled(true);
+                        sln = new ShoppingListNode(VoiceAgentActivity.this, connectedNode);
                         sr.setResultListener(new SpeechRecognitionNode.SpeechRecognitionNodeListener() {
                             @Override
                             public void onResults(Bundle results) {
