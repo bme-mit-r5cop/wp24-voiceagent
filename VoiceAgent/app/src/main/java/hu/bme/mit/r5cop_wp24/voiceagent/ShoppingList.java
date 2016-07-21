@@ -25,8 +25,11 @@ import android.widget.Toast;
 
 import com.google.common.base.Preconditions;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+
+import demo.acl.Product;
 
 public class ShoppingList {
 
@@ -38,14 +41,14 @@ public class ShoppingList {
         ((ShoppingList.ShoppingListAdapter)((ListView)d.findViewById(R.id.listView)).getAdapter()).notifyDataSetChanged();
     }
 
-    public static Dialog createDialog(final Activity context, List<ShoppingList.ShoppingListItem>  list) {
-        final Dialog dialog = new Dialog(context);
+    public static Dialog createDialog(final Activity activity, List<ShoppingList.ShoppingListItem>  list) {
+        final Dialog dialog = new Dialog(activity);
         dialog.setContentView(R.layout.activity_shopping_list);
         dialog.setTitle("Shopping List");
 
         ListView listView = (ListView)dialog.findViewById(R.id.listView);
 
-        listView.setAdapter(new ShoppingListAdapter(context, R.layout.shopping_list_row, list));
+        listView.setAdapter(new ShoppingListAdapter(activity, R.layout.shopping_list_row, list));
 
 
         Button newButton = (Button) dialog.findViewById(R.id.buttonNewItem);
@@ -53,21 +56,8 @@ public class ShoppingList {
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(BAR_CODE_SCANNER_PACKAGE_NAME);
-                intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-                // Check if the Barcode Scanner is installed.
-                if (!isQRCodeReaderInstalled(context, intent)) {
-                    // Open the Market and take them to the page from which they can download the Barcode Scanner
-                    // app.
-                    dialog.dismiss();
-                    context.startActivity(new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("market://details?id=com.google.zxing.client.android")));
-                } else {
-                    // Call the Barcode Scanner to let the user scan a QR code.
-                    dialog.dismiss();
-                    context.startActivityForResult(intent, SHOPPING_LIST_QR_SCAN_NEW_ID);
-                }
-
+                dialog.dismiss();
+                startQRApp(activity, SHOPPING_LIST_QR_SCAN_NEW_ID);
             }
         });
 
@@ -79,11 +69,32 @@ public class ShoppingList {
     private static final String BAR_CODE_SCANNER_PACKAGE_NAME =
             "com.google.zxing.client.android.SCAN";
 
+    private static void startQRApp(Activity activity, int id) {
+        Intent intent = new Intent(BAR_CODE_SCANNER_PACKAGE_NAME);
+        intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+        // Check if the Barcode Scanner is installed.
+        if (!isQRCodeReaderInstalled(activity, intent)) {
+            // Open the Market and take them to the page from which they can download the Barcode Scanner
+            // app.
+            activity.startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("market://details?id=com.google.zxing.client.android")));
+        } else {
+            // Call the Barcode Scanner to let the user scan a QR code.
+            activity.startActivityForResult(intent, id);
+        }
+    }
+
+
     public static class ShoppingListItem {
 
-        String id;
-        public ShoppingListItem(String id) {
-            this.id = id;
+        public enum Status {ADDED, AT_PRODUCT, COLLECTED};
+
+        public Product p;
+        public Status status;
+
+        public ShoppingListItem(Product p) {
+            this.p = p;
+            status = Status.ADDED;
         }
     }
 
@@ -94,9 +105,12 @@ public class ShoppingList {
             super(context, textViewResourceId);
         }
 
-        public ShoppingListAdapter(Context context, int resource, List<ShoppingListItem> items) {
-            super(context, resource, items);
+        public ShoppingListAdapter(Activity activity, int resource, List<ShoppingListItem> items) {
+            super(activity, resource, items);
+            this.activity = activity;
         }
+
+        Activity activity;
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -109,19 +123,36 @@ public class ShoppingList {
                 v = vi.inflate(R.layout.shopping_list_row, null);
             }
 
-            ShoppingListItem p = getItem(position);
+            ShoppingListItem item = getItem(position);
 
-            if (p != null) {
+            if (item != null) {
                 TextView tt1 = (TextView) v.findViewById(R.id.textViewID);
                 ImageButton tt2 = (ImageButton) v.findViewById(R.id.imageButton);
-
+                tt2.setOnClickListener(null);
 
                 if (tt1 != null) {
-                    tt1.setText(p.id);
+                    tt1.setText(item.p.getName());
                 }
 
                 if (tt2 != null) {
-                    tt2.setImageResource(R.drawable.ic_mic_off_black_48dp);
+                    switch (item.status) {
+                        case ADDED:
+                            tt2.setImageResource(R.drawable.ic_mic_off_black_48dp);
+                            break;
+                        case AT_PRODUCT:
+                            tt2.setImageResource(R.drawable.ic_mic_black_48dp);
+                            tt2.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+
+                                    startQRApp(activity, SHOPPING_LIST_QR_SCAN_EXISTING_ID);
+                                }
+                            });
+                            break;
+                        case COLLECTED:
+                            tt2.setImageResource(R.drawable.ic_assignment_black_48dp);
+                            break;
+                    }
                 }
             }
 

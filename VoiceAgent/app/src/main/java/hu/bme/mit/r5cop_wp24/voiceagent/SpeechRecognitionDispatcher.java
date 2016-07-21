@@ -2,6 +2,7 @@ package hu.bme.mit.r5cop_wp24.voiceagent;
 
 import android.util.Log;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.ros.node.ConnectedNode;
@@ -25,13 +26,21 @@ import acl.Text2SpeechMessage;
 public class SpeechRecognitionDispatcher {
 
     private String LOG_TAG = "SpeechRecognitionDispatcher";
+
+    public void reset() {
+        registeredRegExps.clear();
+        publishers.clear();
+    }
+
     public static class RegExpWithPriority implements Comparable<RegExpWithPriority> {
+        String topic;
         String regexp;
         int priority;
 
-        public RegExpWithPriority(String regexp, int priority) {
+        public RegExpWithPriority(String regexp, int priority, String topic) {
             this.regexp = regexp;
             this.priority = priority;
+            this.topic = topic;
         }
 
         public boolean matches(String recognizedString) {
@@ -43,18 +52,35 @@ public class SpeechRecognitionDispatcher {
             return Integer.compare(this.priority, another.priority);
         }
 
-        public static RegExpWithPriority fromAcceptedPattern(AcceptedPattern ap) {
-            return new RegExpWithPriority(ap.getMask(), ap.getPriorty());
+        @Override
+        public boolean equals(Object x) {
+            if (!RegExpWithPriority.class.isInstance(x))
+                return false;
+            RegExpWithPriority xx = (RegExpWithPriority)x;
+            return regexp.equals(xx.regexp) && (priority == xx.priority) && topic.equals(xx.topic);
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 31).
+                    append(regexp).
+                    append(priority).
+                    append(topic).
+                    toHashCode();
+        }
+
+        public static RegExpWithPriority fromAcceptedPattern(AcceptedPattern ap, String topic) {
+            return new RegExpWithPriority(ap.getMask(), ap.getPriorty(), topic);
         }
     }
     ConnectedNode node;
 
-    HashMap<String, List<RegExpWithPriority>> registeredRegExps;
+    List<RegExpWithPriority> registeredRegExps;
     HashMap<String, Publisher<std_msgs.String>> publishers;
 
     public SpeechRecognitionDispatcher(ConnectedNode node) {
         this.node = node;
-        registeredRegExps = new HashMap<>();
+        registeredRegExps = new ArrayList<>();
         publishers = new HashMap<>();
 
 
@@ -62,14 +88,17 @@ public class SpeechRecognitionDispatcher {
 
     public void dispatch(String recognizedString) {
         ArrayList<String> matchingTopics = new ArrayList<>();
-        for (String topic : registeredRegExps.keySet()) {
-            for (RegExpWithPriority rewp : registeredRegExps.get(topic)) {
-                if (rewp.matches(recognizedString)) {
-                    matchingTopics.add(topic);
-                    break;
-                }
+
+        int priority = Integer.MIN_VALUE;
+        for (RegExpWithPriority rewp : registeredRegExps) {
+            if (rewp.priority < priority)
+                break;
+            if (rewp.matches(recognizedString)) {
+                priority = rewp.priority;
+                matchingTopics.add(rewp.topic);
             }
         }
+
 
         for (String topic : matchingTopics) {
             Publisher<std_msgs.String> pub = publishers.get(topic);
@@ -95,15 +124,26 @@ public class SpeechRecognitionDispatcher {
 
 
         String topic = ssm.getRecognitionTopic();
-        ArrayList<RegExpWithPriority> regexplist = new ArrayList<>();
-        //ArrayList<RegExpWithPriority> regexplist =
-        //regexplist.add(new RegExpWithPriority("*",0));
+
+        //remove existing regexps for this topic
+        List<RegExpWithPriority> deletelist = new ArrayList<>();
+        for(RegExpWithPriority rx : registeredRegExps) {
+            if (rx.topic.equals(topic)) {
+                deletelist.add(rx);
+            }
+        }
+        registeredRegExps.removeAll(deletelist);
+
+        //add all new regexps
         for (AcceptedPattern ap : ssm.getAcceptedPatterns()) {
-            regexplist.add(RegExpWithPriority.fromAcceptedPattern(ap));
+            RegExpWithPriority rx = RegExpWithPriority.fromAcceptedPattern(ap, topic);
+            registeredRegExps.add(rx);
         }
 
-        Collections.sort(regexplist);
-        registeredRegExps.put(topic, regexplist);
+        //order in descending order
+        Collections.sort(registeredRegExps);
+        Collections.reverse(registeredRegExps);
+
 
         if (!publishers.containsKey(topic)) {
             Publisher<std_msgs.String> pub = node.newPublisher(topic, std_msgs.String._TYPE);
@@ -111,7 +151,7 @@ public class SpeechRecognitionDispatcher {
         }
     }
 
-    public Map<String, List<RegExpWithPriority>> getRegisteredRegexps() {
+    public List<RegExpWithPriority> getRegisteredRegexps() {
         return registeredRegExps;
     }
 }

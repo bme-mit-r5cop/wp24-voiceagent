@@ -22,6 +22,10 @@ import java.util.Map;
  */
 public class SpeechRecognitionNode implements RecognitionListener {
 
+    public void reset() {
+        srd.reset();
+    }
+
     public interface SpeechRecognitionNodeListener {
         void onResults(Bundle results);
         void onPartialResults(Bundle results);
@@ -29,7 +33,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         void onBeginningOfSpeech();
         void onEndOfSpeech();
         void onRmsChanged(float rmsdB);
-        void onRegexpsChanged(Map<String, List<SpeechRecognitionDispatcher.RegExpWithPriority>> registeredRegexps);
+        void onRegexpsChanged(List<SpeechRecognitionDispatcher.RegExpWithPriority> registeredRegexps);
     }
 
     private String LOG_TAG = "SpeechRecognitionNode";
@@ -52,8 +56,8 @@ public class SpeechRecognitionNode implements RecognitionListener {
             public void onNewMessage(std_msgs.String message) {
                 Log.d(LOG_TAG, "Registration received: " + message.getData());
                 srd.updateRegistrations(message.getData());
-
-                srl.onRegexpsChanged(srd.getRegisteredRegexps());
+                if (srl != null)
+                    srl.onRegexpsChanged(srd.getRegisteredRegexps());
             }
         });
 
@@ -111,7 +115,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches.size() > 0) {
             String t = matches.get(0);
-            srd.dispatch(t);
+            srd.dispatch(t.toLowerCase());
         }
 
         if (srl != null)

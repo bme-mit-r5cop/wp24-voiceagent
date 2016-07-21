@@ -43,6 +43,9 @@ public class VoiceAgentActivity extends RosActivity  {
     TextToSpeechNode tts;
     SpeechRecognitionNode sr;
     ShoppingListNode sln;
+    R5COPManagementNode management;
+
+    Dialog shoppingList;
 
     public VoiceAgentActivity() {
         super("VoiceAgent", "VoiceAgent");
@@ -59,8 +62,6 @@ public class VoiceAgentActivity extends RosActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
 
 
 
@@ -97,10 +98,7 @@ public class VoiceAgentActivity extends RosActivity  {
         slButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Intent intent = new Intent(VoiceAgentActivity.this, ShoppingList.class);
-               // startActivity(intent);
-
-                sln.showDialog(VoiceAgentActivity.this);
+                shoppingList.show();
             }
         });
     }
@@ -116,8 +114,19 @@ public class VoiceAgentActivity extends RosActivity  {
                         || scanResultFormat.equals("QR_CODE"));
                 String contents = intent.getStringExtra("SCAN_RESULT");
 
-                sln.addNewItem(new ShoppingList.ShoppingListItem(contents));
-                sln.showDialog(VoiceAgentActivity.this);
+                sln.addNewItem(contents);
+                shoppingList.show();
+            }
+        }
+        else if (requestCode == ShoppingList.SHOPPING_LIST_QR_SCAN_EXISTING_ID) {
+            if (resultCode == RESULT_OK) {
+                String scanResultFormat = intent.getStringExtra("SCAN_RESULT_FORMAT");
+                Preconditions.checkState(scanResultFormat.equals("TEXT_TYPE")
+                        || scanResultFormat.equals("QR_CODE"));
+                String contents = intent.getStringExtra("SCAN_RESULT");
+
+                sln.scannedProductForPickup(contents);
+                shoppingList.show();
             }
         }
         else {
@@ -158,31 +167,24 @@ public class VoiceAgentActivity extends RosActivity  {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        tts = new TextToSpeechNode(VoiceAgentActivity.this, connectedNode);
                         sr = new SpeechRecognitionNode(VoiceAgentActivity.this, connectedNode);
-                        recButton.setEnabled(true);
-                        sln = new ShoppingListNode(VoiceAgentActivity.this, connectedNode);
+
                         sr.setResultListener(new SpeechRecognitionNode.SpeechRecognitionNodeListener() {
                             @Override
                             public void onResults(Bundle results) {
                                 Log.i(LOG_TAG, "onResults");
                                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                                String text = "";
-                                for (String result : matches)
-                                    text += result + "\n";
-
+                                String text = recResult.getText().toString();
+                                text += "\n User: " + matches.get(0);
                                 recResult.setText(text);
+
                             }
 
                             @Override
                             public void onPartialResults(Bundle results) {
                                 Log.i(LOG_TAG, "onPartialResults");
                                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                                String text = "";
-                                for (String result : matches)
-                                    text += result + "\n";
 
-                                recResult.setText(text);
                             }
 
                             @Override
@@ -202,29 +204,80 @@ public class VoiceAgentActivity extends RosActivity  {
                             }
 
                             @Override
-                            public void onRegexpsChanged(final Map<String, List<SpeechRecognitionDispatcher.RegExpWithPriority>> registeredRegexps) {
+                            public void onRegexpsChanged(final List<SpeechRecognitionDispatcher.RegExpWithPriority> registeredRegexps) {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         StringBuilder sb = new StringBuilder();
                                         sb.append("Available commands:\n");
-                                        for(String topic : registeredRegexps.keySet()) {
-                                            for (SpeechRecognitionDispatcher.RegExpWithPriority rwp : registeredRegexps.get(topic)) {
-                                                //sb.append(topic);
-                                                //sb.append(": ");
-                                                sb.append(rwp.regexp);
-                                                //sb.append(" (");
-                                                //sb.append(rwp.priority);
-                                                //sb.append(")");
-                                                sb.append("\n");
-                                            }
+                                        for (SpeechRecognitionDispatcher.RegExpWithPriority rwp : registeredRegexps) {
+                                            //sb.append(topic);
+                                            //sb.append(": ");
+                                            sb.append(rwp.regexp);
+                                            //sb.append(" (");
+                                            //sb.append(rwp.priority);
+                                            //sb.append(")");
+                                            sb.append("\n");
                                         }
+
                                         regexpText.setText(sb.toString());
                                     }
                                 });
 
                             }
                         });
+
+
+                        tts = new TextToSpeechNode(VoiceAgentActivity.this, connectedNode);
+                        tts.setOnTextToSpeechMessageListener(new TextToSpeechNode.OnTextToSpeechMessageListener() {
+                            @Override
+                            public void onTextToSpeechMessage(final String msg) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        String text = recResult.getText().toString();
+                                        text += "\n Robot: " + msg;
+                                        recResult.setText(text);
+                                    }
+                                });
+                            }
+                        });
+                        recButton.setEnabled(true);
+                        sln = new ShoppingListNode(VoiceAgentActivity.this, connectedNode);
+                        shoppingList = ShoppingList.createDialog(VoiceAgentActivity.this, sln.getShoppingList());
+
+                        sln.setOnShoppingListChangedListener(new ShoppingListNode.OnShoppingListChangedListener() {
+                            @Override
+                            public void onShoppingListChanged() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        ShoppingList.notifyDataSetChanged(shoppingList);
+                                    }
+                                });
+                            }
+                        });
+
+
+                        management = new R5COPManagementNode(VoiceAgentActivity.this, connectedNode);
+                        management.setOnManagementMessageListener(new R5COPManagementNode.OnManagementMessageListener() {
+                            @Override
+                            public void onManagementMessage(String s) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        recResult.setText("");
+                                        regexpText.setText("");
+
+                                        tts.reset();
+                                        sr.reset();
+                                        sln.reset();
+                                    }
+                                });
+                            }
+                        });
+
+
                     }
                 });
 
