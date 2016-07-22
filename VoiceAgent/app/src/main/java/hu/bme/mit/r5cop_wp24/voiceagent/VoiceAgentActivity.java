@@ -1,14 +1,27 @@
 package hu.bme.mit.r5cop_wp24.voiceagent;
 
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.speech.SpeechRecognizer;
 import android.os.Bundle;
+import android.speech.tts.Voice;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.text.Html;
+import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.common.base.Preconditions;
@@ -35,8 +48,7 @@ public class VoiceAgentActivity extends RosActivity  {
 
     ImageButton recButton;
     boolean isRecording = false;
-    long recStartTime;
-    TextView recResult;
+    TextView chatText;
     TextView regexpText;
 
 
@@ -69,9 +81,15 @@ public class VoiceAgentActivity extends RosActivity  {
         sendOrderedBroadcast(detailsIntent, null, new LanguageDetailsChecker(), null, Activity.RESULT_OK, null, null);
         */
 
-        recResult = (TextView)findViewById(R.id.recResult);
+        chatText = (TextView) findViewById(R.id.chatText);
+        chatText.setMovementMethod(new ScrollingMovementMethod());
         recButton = (ImageButton)findViewById(R.id.buttonRec);
         regexpText = (TextView)findViewById(R.id.regexpText);
+        regexpText.setMovementMethod(new ScrollingMovementMethod());
+
+
+
+
         recButton.setEnabled(false);
         recButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,6 +121,20 @@ public class VoiceAgentActivity extends RosActivity  {
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.RECORD_AUDIO)) {
+
+            } else {
+
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 0);
+            }
+        }
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -147,12 +179,39 @@ public class VoiceAgentActivity extends RosActivity  {
         }
     }
 
+
+    NodeMainExecutor nodeMainExecutor;
+
     //ROS
     @Override
-    protected void init(NodeMainExecutor nodeMainExecutor) {
+    protected void init(final NodeMainExecutor nodeMainExecutor) {
+        this.nodeMainExecutor = nodeMainExecutor;
         Log.d(LOG_TAG, "Master IP: " + getMasterUri().getHost().toString() + " port: " + getMasterUri().getPort());
         String ownAddr = findOwnAddress();
         Log.d(LOG_TAG, "Own IP: " + ownAddr);
+
+        if (ownAddr == null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    AlertDialog.Builder b = new AlertDialog.Builder(VoiceAgentActivity.this);
+                    b.setTitle("Error!").setMessage("Cannot connect to ROS core, make sure you are connected to VPN, and ROS core is running! Press OK to try again!").setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            (new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    init(nodeMainExecutor);
+                                }
+                            })).start();
+                        }
+                    }).create().show();
+                }
+            });
+            return;
+        }
+
+
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(ownAddr, getMasterUri());
 
         nodeMainExecutor.execute(new NodeMain() {
@@ -174,9 +233,9 @@ public class VoiceAgentActivity extends RosActivity  {
                             public void onResults(Bundle results) {
                                 Log.i(LOG_TAG, "onResults");
                                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                                String text = recResult.getText().toString();
-                                text += "\n User: " + matches.get(0);
-                                recResult.setText(text);
+                                CharSequence text = chatText.getText();
+                                text = TextUtils.concat(text, Html.fromHtml("<br><font color='red'><b>User:</b></font> " + matches.get(0)));
+                                chatText.setText(text, TextView.BufferType.SPANNABLE);
 
                             }
 
@@ -235,9 +294,9 @@ public class VoiceAgentActivity extends RosActivity  {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        String text = recResult.getText().toString();
-                                        text += "\n Robot: " + msg;
-                                        recResult.setText(text);
+                                        CharSequence text = chatText.getText();
+                                        text = TextUtils.concat(text, Html.fromHtml("<br><font color='blue'><b>Robot:</b></font> " + msg));
+                                        chatText.setText(text, TextView.BufferType.SPANNABLE);
                                     }
                                 });
                             }
@@ -266,7 +325,7 @@ public class VoiceAgentActivity extends RosActivity  {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        recResult.setText("");
+                                        chatText.setText("");
                                         regexpText.setText("");
 
                                         tts.reset();
