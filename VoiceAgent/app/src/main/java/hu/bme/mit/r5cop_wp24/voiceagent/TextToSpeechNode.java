@@ -1,6 +1,7 @@
 package hu.bme.mit.r5cop_wp24.voiceagent;
 
 import android.content.Context;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
@@ -14,6 +15,7 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.PublisherListener;
 import org.ros.node.topic.Subscriber;
 
+import java.util.HashMap;
 import java.util.Locale;
 
 import acl.GeneralMessage;
@@ -58,7 +60,14 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
                     Text2SpeechMessage ttsmsg = new Text2SpeechMessage(message.getData());
                     String speakString = ttsmsg.getText();
                     lastMessage = speakString;
-                    tts.speak(speakString, TextToSpeech.QUEUE_ADD, null, speakString);
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        tts.speak(speakString, TextToSpeech.QUEUE_ADD, null, speakString);
+                    }
+                    else {
+                        HashMap<String, String> mm = new HashMap<String, String>();
+                        mm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, speakString);
+                        tts.speak(speakString, TextToSpeech.QUEUE_ADD, mm);
+                    }
 
                     if (!hasRepeatRegistered) {
                         registerRepeat(node);
@@ -106,7 +115,14 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
             Log.d(LOG_TAG, "TTS repeat received: " + message.getData());
             try {
                 GeneralMessage ttsmsg = new GeneralMessage(message.getData());
-                tts.speak(lastMessage, TextToSpeech.QUEUE_ADD, null, lastMessage);
+                if (Build.VERSION.SDK_INT >= 21) {
+                    tts.speak(lastMessage, TextToSpeech.QUEUE_ADD, null, lastMessage);
+                }
+                else {
+                    HashMap<String, String> mm = new HashMap<String, String>();
+                    mm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, lastMessage);
+                    tts.speak(lastMessage, TextToSpeech.QUEUE_ADD, mm);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -130,8 +146,8 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
         Log.d(LOG_TAG, "publishRegisterRepeat");
         std_msgs.String msg = p.newMessage();
         SubscribeMessage sm = new SubscribeMessage("TextToSpeechNode", "SpeechRecognitionRegister", topicRepeat);
-        sm.addAcceptedPattern(".* repeat",-100);
-        sm.addAcceptedPattern("say again",-100);
+        sm.addAcceptedPattern(".*repeat.*",-100);
+        sm.addAcceptedPattern(".*say again.*",-100);
         msg.setData(sm.toJson());
         p.publish(msg);
     }

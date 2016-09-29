@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "hu.bme.mit.r5cop_wp24.voiceagent"
-        minSdkVersion 14
-        targetSdkVersion 14
+        minSdkVersion 15
+        targetSdkVersion 15
         versionCode 1
         versionName "1.0"
     }

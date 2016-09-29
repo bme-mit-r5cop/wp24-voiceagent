@@ -286,38 +286,6 @@ public class VoiceAgentActivity extends RosActivity  {
                             }
                         });
 
-
-                        tts = new TextToSpeechNode(VoiceAgentActivity.this, connectedNode);
-                        tts.setOnTextToSpeechMessageListener(new TextToSpeechNode.OnTextToSpeechMessageListener() {
-                            @Override
-                            public void onTextToSpeechMessage(final String msg) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        CharSequence text = chatText.getText();
-                                        text = TextUtils.concat(text, Html.fromHtml("<br><font color='blue'><b>Robot:</b></font> " + msg));
-                                        chatText.setText(text, TextView.BufferType.SPANNABLE);
-                                    }
-                                });
-                            }
-                        });
-                        recButton.setEnabled(true);
-                        sln = new ShoppingListNode(VoiceAgentActivity.this, connectedNode);
-                        shoppingList = ShoppingList.createDialog(VoiceAgentActivity.this, sln.getShoppingList());
-
-                        sln.setOnShoppingListChangedListener(new ShoppingListNode.OnShoppingListChangedListener() {
-                            @Override
-                            public void onShoppingListChanged() {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        ShoppingList.notifyDataSetChanged(shoppingList);
-                                    }
-                                });
-                            }
-                        });
-
-
                         management = new R5COPManagementNode(VoiceAgentActivity.this, connectedNode);
                         management.setOnManagementMessageListener(new R5COPManagementNode.OnManagementMessageListener() {
                             @Override
@@ -336,6 +304,37 @@ public class VoiceAgentActivity extends RosActivity  {
                             }
                         });
 
+
+                        sln = new ShoppingListNode(VoiceAgentActivity.this, connectedNode);
+                        shoppingList = ShoppingList.createDialog(VoiceAgentActivity.this, sln.getShoppingList());
+
+                        sln.setOnShoppingListChangedListener(new ShoppingListNode.OnShoppingListChangedListener() {
+                            @Override
+                            public void onShoppingListChanged() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        ShoppingList.notifyDataSetChanged(shoppingList);
+                                    }
+                                });
+                            }
+                        });
+
+                        tts = new TextToSpeechNode(VoiceAgentActivity.this, connectedNode);
+                        tts.setOnTextToSpeechMessageListener(new TextToSpeechNode.OnTextToSpeechMessageListener() {
+                            @Override
+                            public void onTextToSpeechMessage(final String msg) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        CharSequence text = chatText.getText();
+                                        text = TextUtils.concat(text, Html.fromHtml("<br><font color='blue'><b>Robot:</b></font> " + msg));
+                                        chatText.setText(text, TextView.BufferType.SPANNABLE);
+                                    }
+                                });
+                            }
+                        });
+                        recButton.setEnabled(true);
 
                     }
                 });

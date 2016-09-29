@@ -19,5 +19,6 @@
         android:background="#00ffffff"
         android:layout_alignTop="@+id/textViewID"
         android:layout_alignParentEnd="true"
-        android:src="@android:drawable/ic_menu_share" />
+        android:src="@android:drawable/ic_menu_share"
+        android:minWidth="24dip" />
 </RelativeLayout>
