@@ -49,7 +49,7 @@ public class SpeechRecognitionDispatcher {
 
         @Override
         public int compareTo(RegExpWithPriority another) {
-            return Integer.compare(this.priority, another.priority);
+            return this.priority < another.priority ? -1 : (this.priority == another.priority ? 0 : 1);
         }
 
         @Override
@@ -108,7 +108,7 @@ public class SpeechRecognitionDispatcher {
 
             String msg = srm.toJson(); //serialize message to string
             str.setData(msg);
-            Log.d(LOG_TAG, "Recognition sent: " + str.getData());
+            ScreenLogger.d(LOG_TAG, "Recognition sent: " + str.getData());
             pub.publish(str);
         }
     }

@@ -24,8 +24,9 @@
         android:id="@+id/butonShoppingList"
         android:background="#00ffffff"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:src="@drawable/ic_assignment_black_48dp" />
+        android:layout_alignParentEnd="false"
+        android:src="@drawable/ic_assignment_black_48dp"
+        android:layout_alignParentRight="true" />
 
     <LinearLayout
         android:orientation="vertical"

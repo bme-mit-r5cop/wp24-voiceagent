@@ -54,7 +54,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
-                Log.d(LOG_TAG, "Registration received: " + message.getData());
+                ScreenLogger.d(LOG_TAG, "Registration received: " + message.getData());
                 srd.updateRegistrations(message.getData());
                 if (srl != null)
                     srl.onRegexpsChanged(srd.getRegisteredRegexps());
@@ -67,33 +67,32 @@ public class SpeechRecognitionNode implements RecognitionListener {
 
     @Override
     public void onReadyForSpeech(Bundle params) {
-        Log.i(LOG_TAG, "onReadyForSpeech");
+        ScreenLogger.i(LOG_TAG, "onReadyForSpeech");
         if (srl != null)
             srl.onReadyForSpeech(params);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        Log.i(LOG_TAG, "onBeginningOfSpeech");
+        ScreenLogger.i(LOG_TAG, "onBeginningOfSpeech");
         if (srl != null)
             srl.onBeginningOfSpeech();
     }
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        Log.i(LOG_TAG, "onRmsChanged");
         if (srl != null)
             srl.onRmsChanged(rmsdB);
     }
 
     @Override
     public void onBufferReceived(byte[] buffer) {
-        Log.i(LOG_TAG, "onBufferReceived");
+        ScreenLogger.i(LOG_TAG, "onBufferReceived");
     }
 
     @Override
     public void onEndOfSpeech() {
-        Log.i(LOG_TAG, "onEndOfSpeech");
+        ScreenLogger.i(LOG_TAG, "onEndOfSpeech");
         if (srl != null)
             srl.onEndOfSpeech();
     }
@@ -101,12 +100,12 @@ public class SpeechRecognitionNode implements RecognitionListener {
     @Override
     public void onError(int error) {
 
-        Log.i(LOG_TAG, "onError: " + error);
+        ScreenLogger.i(LOG_TAG, "onError: " + error);
         long now = System.currentTimeMillis();
         if (error == SpeechRecognizer.ERROR_NO_MATCH && (now - recStartTime < 300)) {
             sr.cancel();
             startListening();
-            Log.i(LOG_TAG, "SpeechRecognition restarted listening to workaround a known bug.");
+            ScreenLogger.i(LOG_TAG, "SpeechRecognition restarted listening to workaround a known bug.");
         }
     }
 
@@ -130,7 +129,7 @@ public class SpeechRecognitionNode implements RecognitionListener {
 
     @Override
     public void onEvent(int eventType, Bundle params) {
-        Log.i(LOG_TAG, "onEvent");
+        ScreenLogger.i(LOG_TAG, "onEvent");
     }
 
 

@@ -55,7 +55,7 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
-                Log.d(LOG_TAG, "TTS received: " + message.getData());
+                ScreenLogger.d(LOG_TAG, "TTS received: " + message.getData());
                 try {
                     Text2SpeechMessage ttsmsg = new Text2SpeechMessage(message.getData());
                     String speakString = ttsmsg.getText();
@@ -103,7 +103,7 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
     }
 
     private void registerRepeat(final ConnectedNode node) {
-        Log.d(LOG_TAG, "registerRepeat");
+        ScreenLogger.d(LOG_TAG, "registerRepeat");
         hasRepeatRegistered = true;
 
         if (repeatSubscriber != null)
@@ -112,7 +112,7 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
         repeatSubscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
-            Log.d(LOG_TAG, "TTS repeat received: " + message.getData());
+                ScreenLogger.d(LOG_TAG, "TTS repeat received: " + message.getData());
             try {
                 GeneralMessage ttsmsg = new GeneralMessage(message.getData());
                 if (Build.VERSION.SDK_INT >= 21) {
@@ -136,14 +136,14 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
         repeatRegisterPublisher.addListener(new DefaultPublisherListener<std_msgs.String>() {
             @Override
             public void onNewSubscriber(Publisher<std_msgs.String> publisher, SubscriberIdentifier subscriberIdentifier) {
-                Log.d(LOG_TAG,"new SpeechRecognitionRegister subscriber");
+                ScreenLogger.d(LOG_TAG,"new SpeechRecognitionRegister subscriber");
                 publishRegisterRepeat(publisher);
             }
         });
     }
 
     private void publishRegisterRepeat(Publisher<std_msgs.String> p) {
-        Log.d(LOG_TAG, "publishRegisterRepeat");
+        ScreenLogger.d(LOG_TAG, "publishRegisterRepeat");
         std_msgs.String msg = p.newMessage();
         SubscribeMessage sm = new SubscribeMessage("TextToSpeechNode", "SpeechRecognitionRegister", topicRepeat);
         sm.addAcceptedPattern(".*repeat.*",-100);

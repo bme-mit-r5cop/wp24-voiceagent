@@ -1,9 +1,6 @@
 package hu.bme.mit.r5cop_wp24.voiceagent;
 
-import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
-import android.util.Log;
 
 import org.json.JSONException;
 import org.ros.message.MessageListener;
@@ -11,7 +8,6 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +36,7 @@ public class ShoppingListNode {
 
 
     public interface OnShoppingListChangedListener {
-        void onShoppingListChanged();
+        void onShoppingListChanged(Runnable r);
     }
 
     public ShoppingListNode(Context context, ConnectedNode node) {
@@ -56,13 +52,19 @@ public class ShoppingListNode {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
-                Log.d(LOG_TAG, "item changed received: " + message.getData());
+                ScreenLogger.d(LOG_TAG, "item changed received: " + message.getData());
                 try {
-                    ProductMessage pm = new ProductMessage(message.getData());
-                    changeItemState(pm.getProduct(), pm.getStatus());
+                    final ProductMessage pm = new ProductMessage(message.getData());
 
                     if (oslcl != null) {
-                        oslcl.onShoppingListChanged();
+                        oslcl.onShoppingListChanged(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            changeItemState(pm.getProduct(), pm.getStatus());
+                                                        }
+                                                    }
+                        );
+
                     }
 
                 } catch (JSONException e) {
@@ -70,6 +72,8 @@ public class ShoppingListNode {
                 }
             }
         });
+
+
     }
 
     public void setOnShoppingListChangedListener(OnShoppingListChangedListener l) {
@@ -124,9 +128,13 @@ public class ShoppingListNode {
     }
 
     public void reset() {
-        shoppingList.clear();
         if (oslcl != null) {
-            oslcl.onShoppingListChanged();
+            oslcl.onShoppingListChanged(new Runnable() {
+                @Override
+                public void run() {
+                    shoppingList.clear();
+                }
+            });
         }
     }
 }

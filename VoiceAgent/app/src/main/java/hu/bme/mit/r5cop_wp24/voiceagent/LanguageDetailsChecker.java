@@ -33,7 +33,7 @@ public class LanguageDetailsChecker extends BroadcastReceiver
                     results.getStringArrayList(
                             RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES);
             for(String s : supportedLanguages) {
-                Log.i("LanguageDetailsChecker", s);
+                ScreenLogger.i("LanguageDetailsChecker", s);
             }
         }
     }

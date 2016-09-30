@@ -17,7 +17,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:replace="icon">
-        <activity android:name=".VoiceAgentActivity">
+        <activity android:name=".VoiceAgentActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -32,9 +34,6 @@
             </intent-filter>
         </service>
 
-        <activity
-            android:name=".ShoppingList"
-            android:label="@string/title_activity_shopping_list"></activity>
     </application>
 
 </manifest>

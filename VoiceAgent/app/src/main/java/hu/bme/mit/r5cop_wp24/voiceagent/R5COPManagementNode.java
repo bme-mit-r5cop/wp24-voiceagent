@@ -28,7 +28,7 @@ public class R5COPManagementNode {
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
-                Log.d(LOG_TAG, "R5COP_Management received: " + message.getData());
+                ScreenLogger.d(LOG_TAG, "R5COP_Management received: " + message.getData());
                 try {
                     GeneralMessage msg = new GeneralMessage(message.getData());
                     String strmsg = msg.getContent();

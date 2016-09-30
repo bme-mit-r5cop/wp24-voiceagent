@@ -9,17 +9,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.speech.SpeechRecognizer;
 import android.os.Bundle;
-import android.speech.tts.Voice;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.View;
-import android.webkit.WebView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -39,11 +34,13 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
+import demo.acl.Product;
 
 
 public class VoiceAgentActivity extends RosActivity  {
 
+    private static final boolean DEBUG = false;
     private String LOG_TAG = "VoiceAgent";
 
     ImageButton recButton;
@@ -87,6 +84,9 @@ public class VoiceAgentActivity extends RosActivity  {
         regexpText = (TextView)findViewById(R.id.regexpText);
         regexpText.setMovementMethod(new ScrollingMovementMethod());
 
+        if (DEBUG) {
+            new ScreenLogger(regexpText, this);
+        }
 
 
 
@@ -100,12 +100,12 @@ public class VoiceAgentActivity extends RosActivity  {
                         sr.startListening();
                         recButton.setImageResource(R.drawable.ic_mic_off_black_48dp);
 
-                        Log.d(LOG_TAG, "rec start");
+                        ScreenLogger.d(LOG_TAG, "rec start");
                     } else {
                         isRecording = false;
                         sr.stopListening();
                         recButton.setImageResource(R.drawable.ic_mic_black_48dp);
-                        Log.d(LOG_TAG, "rec stop");
+                        ScreenLogger.d(LOG_TAG, "rec stop");
                     }
                 }
             }
@@ -177,8 +177,17 @@ public class VoiceAgentActivity extends RosActivity  {
             tts.shutdown();
             tts = null;
         }
+        ScreenLogger.destroy();
     }
 
+
+    private void scrollToBottom(TextView tv) {
+        final int scrollAmount = tv.getLayout().getLineTop(tv.getLineCount()) - tv.getHeight();
+        if (scrollAmount > 0)
+            tv.scrollTo(0, scrollAmount);
+        else
+            tv.scrollTo(0, 0);
+    }
 
     NodeMainExecutor nodeMainExecutor;
 
@@ -186,9 +195,9 @@ public class VoiceAgentActivity extends RosActivity  {
     @Override
     protected void init(final NodeMainExecutor nodeMainExecutor) {
         this.nodeMainExecutor = nodeMainExecutor;
-        Log.d(LOG_TAG, "Master IP: " + getMasterUri().getHost().toString() + " port: " + getMasterUri().getPort());
+        ScreenLogger.d(LOG_TAG, "Master IP: " + getMasterUri().getHost().toString() + " port: " + getMasterUri().getPort());
         String ownAddr = findOwnAddress();
-        Log.d(LOG_TAG, "Own IP: " + ownAddr);
+        ScreenLogger.d(LOG_TAG, "Own IP: " + ownAddr);
 
         if (ownAddr == null) {
             runOnUiThread(new Runnable() {
@@ -222,7 +231,7 @@ public class VoiceAgentActivity extends RosActivity  {
 
             @Override
             public void onStart(final ConnectedNode connectedNode) {
-                Log.d(LOG_TAG, "onStart");
+                ScreenLogger.d(LOG_TAG, "onStart");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -231,17 +240,17 @@ public class VoiceAgentActivity extends RosActivity  {
                         sr.setResultListener(new SpeechRecognitionNode.SpeechRecognitionNodeListener() {
                             @Override
                             public void onResults(Bundle results) {
-                                Log.i(LOG_TAG, "onResults");
+                                ScreenLogger.i(LOG_TAG, "onResults");
                                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                                 CharSequence text = chatText.getText();
                                 text = TextUtils.concat(text, Html.fromHtml("<br><font color='red'><b>User:</b></font> " + matches.get(0)));
                                 chatText.setText(text, TextView.BufferType.SPANNABLE);
-
+                                scrollToBottom(chatText);
                             }
 
                             @Override
                             public void onPartialResults(Bundle results) {
-                                Log.i(LOG_TAG, "onPartialResults");
+                                ScreenLogger.i(LOG_TAG, "onPartialResults");
                                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
                             }
@@ -267,19 +276,21 @@ public class VoiceAgentActivity extends RosActivity  {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        StringBuilder sb = new StringBuilder();
-                                        sb.append("Available commands:\n");
-                                        for (SpeechRecognitionDispatcher.RegExpWithPriority rwp : registeredRegexps) {
-                                            //sb.append(topic);
-                                            //sb.append(": ");
-                                            sb.append(rwp.regexp);
-                                            //sb.append(" (");
-                                            //sb.append(rwp.priority);
-                                            //sb.append(")");
-                                            sb.append("\n");
-                                        }
+                                        if (!DEBUG) {
+                                            StringBuilder sb = new StringBuilder();
+                                            sb.append("Available commands:\n");
+                                            for (SpeechRecognitionDispatcher.RegExpWithPriority rwp : registeredRegexps) {
+                                                //sb.append(topic);
+                                                //sb.append(": ");
+                                                sb.append(rwp.regexp);
+                                                //sb.append(" (");
+                                                //sb.append(rwp.priority);
+                                                //sb.append(")");
+                                                sb.append("\n");
+                                            }
 
-                                        regexpText.setText(sb.toString());
+                                            regexpText.setText(sb.toString());
+                                        }
                                     }
                                 });
 
@@ -310,11 +321,12 @@ public class VoiceAgentActivity extends RosActivity  {
 
                         sln.setOnShoppingListChangedListener(new ShoppingListNode.OnShoppingListChangedListener() {
                             @Override
-                            public void onShoppingListChanged() {
+                            public void onShoppingListChanged(final Runnable r) {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         ShoppingList.notifyDataSetChanged(shoppingList);
+                                        r.run();
                                     }
                                 });
                             }
@@ -330,6 +342,7 @@ public class VoiceAgentActivity extends RosActivity  {
                                         CharSequence text = chatText.getText();
                                         text = TextUtils.concat(text, Html.fromHtml("<br><font color='blue'><b>Robot:</b></font> " + msg));
                                         chatText.setText(text, TextView.BufferType.SPANNABLE);
+                                        scrollToBottom(chatText);
                                     }
                                 });
                             }
@@ -343,17 +356,17 @@ public class VoiceAgentActivity extends RosActivity  {
 
             @Override
             public void onShutdown(Node node) {
-                Log.d(LOG_TAG, "onShutdown");
+                ScreenLogger.d(LOG_TAG, "onShutdown");
             }
 
             @Override
             public void onShutdownComplete(Node node) {
-                Log.d(LOG_TAG, "onShutdownComplete");
+                ScreenLogger.d(LOG_TAG, "onShutdownComplete");
             }
 
             @Override
             public void onError(Node node, Throwable throwable) {
-                Log.d(LOG_TAG, "onError");
+                ScreenLogger.d(LOG_TAG, "onError");
             }
         }, nodeConfiguration);
     }
@@ -366,7 +379,7 @@ public class VoiceAgentActivity extends RosActivity  {
             return local_network_address.getHostAddress();
         } catch (IOException e) {
             // Socket problem
-            Log.e(LOG_TAG, "socket error trying to get networking information from the master uri");
+            ScreenLogger.e(LOG_TAG, "socket error trying to get networking information from the master uri");
         }
         return null;
     }
