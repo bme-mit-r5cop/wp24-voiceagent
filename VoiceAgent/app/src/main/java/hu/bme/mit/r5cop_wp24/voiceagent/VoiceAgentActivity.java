@@ -301,15 +301,14 @@ public class VoiceAgentActivity extends RosActivity  {
                         management.setOnManagementMessageListener(new R5COPManagementNode.OnManagementMessageListener() {
                             @Override
                             public void onManagementMessage(String s) {
+                                sr.reset();
+                                sln.reset();
+                                tts.reset();
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         chatText.setText("");
                                         regexpText.setText("");
-
-                                        tts.reset();
-                                        sr.reset();
-                                        sln.reset();
                                     }
                                 });
                             }

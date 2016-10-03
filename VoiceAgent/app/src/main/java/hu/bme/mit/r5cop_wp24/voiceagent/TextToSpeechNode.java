@@ -57,6 +57,10 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
             public void onNewMessage(std_msgs.String message) {
                 ScreenLogger.d(LOG_TAG, "TTS received: " + message.getData());
                 try {
+                    if (!hasRepeatRegistered) {
+                        registerRepeat(node);
+                    }
+
                     Text2SpeechMessage ttsmsg = new Text2SpeechMessage(message.getData());
                     String speakString = ttsmsg.getText();
                     lastMessage = speakString;
@@ -69,9 +73,7 @@ public class TextToSpeechNode implements TextToSpeech.OnInitListener {
                         tts.speak(speakString, TextToSpeech.QUEUE_ADD, mm);
                     }
 
-                    if (!hasRepeatRegistered) {
-                        registerRepeat(node);
-                    }
+
 
                 } catch (JSONException e) {
                     e.printStackTrace();
