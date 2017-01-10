@@ -50,6 +50,8 @@ public class SpeechRecognitionNode implements RecognitionListener {
         sr.setRecognitionListener(this);
 
 
+        srd = new SpeechRecognitionDispatcher(node);
+
         Subscriber<std_msgs.String> subscriber = node.newSubscriber(topicRegister, std_msgs.String._TYPE);
         subscriber.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
@@ -60,9 +62,6 @@ public class SpeechRecognitionNode implements RecognitionListener {
                     srl.onRegexpsChanged(srd.getRegisteredRegexps());
             }
         });
-
-
-        srd = new SpeechRecognitionDispatcher(node);
     }
 
     @Override
